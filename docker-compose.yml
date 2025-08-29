@@ -290,6 +290,7 @@ services:
         - '${TVDIR}:/tv'
         - '${C1}:/data/contentA'
         - '${C2}:/data/contentB'
+        - '${MOVIEDIR}:/movies'
         - '/etc/localtime:/etc/localtime:ro'
     ports:
       - 6767:6767
@@ -413,3 +414,49 @@ services:
     volumes:
         - '/var/run/docker.sock:/var/run/docker.sock'
 
+
+  # ----------------------------------------
+  # DECLUTTARR
+  # ----------------------------------------
+  decluttarr:
+    image: ghcr.io/manimatter/decluttarr:dev
+    container_name: decluttarr
+    restart: always
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - './decluttarr/:/app/config/'
+      - '${DLDIR}/completed:/data/completed'
+      - '${TVDIR}:/tv'
+      - '${C1}:/data/contentA'
+      - '${C2}:/data/contentB'
+      - '${MOVIEDIR}:/movies'
+      # - $DOCKERDIR/appdata/decluttarr/logs:/app/logs # Uncomment to get logs in text file, too
+      # - $DOCKERDIR/appdata/decluttarr/logs:/app/logs # Uncomment to get logs in text file, too
+      # - $DATADIR/media:/media # If you use detect_deletions, add the identical mount paths that you use in your sonarr/radarr instances. This may be different to this example!
+
+
+  # ----------------------------------------
+  # FILEFLOWS
+  # ----------------------------------------
+  fileflows:
+    image: revenz/fileflows:stable
+    container_name: fileflows
+    restart: unless-stopped
+    ports:
+      - "19200:5000"
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./fileflow:/app/Data
+      - ./temp:/temp
+      - ./dockermods:/app/common
+      - '${TVDIR}:/tv'
+      - '${C1}:/data/contentA'
+      - '${C2}:/data/contentB'
+      - '${MOVIEDIR}:/movies'

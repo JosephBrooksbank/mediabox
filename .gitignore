@@ -43,3 +43,7 @@ sonarr/*
 speedtest/*
 tautulli/*
 tdarr/*
+decluttarr/*
+fileflow/*
+dockermods/*
+temp/*
