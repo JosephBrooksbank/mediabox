@@ -1,14 +1,15 @@
 # This repo is under reconstruction!
 ## TODO
-- update homer to remove unused services
+- ~~update homer to remove unused services~~
 - update getting started page
 - clean up readme
 - add links for new services
-    - bazarr
+    - ~~bazarr~~
     - declutterr
-- add declutterr
-- update setup script to reflex changes in services
-- update setup script for rerunning (ASK before overwriting local changes)
+    - fileflows
+- ~~add declutterr~~
+- update setup script to reflect changes in services
+- ~~update setup script for rerunning (ASK before overwriting local changes)~~
 
 
 # Mediabox
