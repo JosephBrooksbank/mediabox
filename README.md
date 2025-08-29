@@ -1,3 +1,16 @@
+# This repo is under reconstruction!
+## TODO
+- update homer to remove unused services
+- update getting started page
+- clean up readme
+- add links for new services
+    - bazarr
+    - declutterr
+- add declutterr
+- update setup script to reflex changes in services
+- update setup script for rerunning (ASK before overwriting local changes)
+
+
 # Mediabox
 
 Mediabox is an all Docker Container based media aggregator stack.
