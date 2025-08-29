@@ -4,40 +4,22 @@ Mediabox is an all Docker Container based media aggregator stack.
 
 Components include:
 
-* [Couchpotato movie library manager](https://couchpota.to/)
 * [Deluge torrent client (using VPN)](http://deluge-torrent.org/)
 * [Dozzle realtime log viewer](https://github.com/amir20/dozzle)
-* [Duplicati Backup Software](https://www.duplicati.com/)
-* [Emby Open Media Solution](https://emby.media/)
 * [Filebrowser Web-Based File Manager](https://github.com/filebrowser/filebrowser)
 * [Flaresolverr proxy server to bypass Cloudflare protection (Used with Jackett)](https://github.com/FlareSolverr/FlareSolverr)
 * [Glances system monitoring](https://nicolargo.github.io/glances/)
-* [Headphones automated music downloader](https://github.com/linuxserver/docker-headphones)
 * [Homer - Server Home Page](https://github.com/bastienwirtz/homer)
 * [Homer Icons - Icons for Homer](https://github.com/NX211/homer-icons)
-* [Jackett Tracker API and Proxy](https://github.com/Jackett/Jackett)
-* [Jellyfin Free Software Media System](https://github.com/jellyfin/jellyfin)
-* [Lidarr Music collection manager](https://lidarr.audio/)
-* [MeTube Web GUI for youtube-dl](https://github.com/alexta69/metube)
-* [Minio cloud storage](https://www.minio.io/)
-* [NetData System Monitoring](https://github.com/netdata/netdata)
-* [NZBGet Usenet Downloader](https://nzbget.net/)  
-* [NZBHydra2 Meta Search](https://github.com/theotherp/nzbhydra2)  
-* [Ombi media assistant](http://www.ombi.io/)
 * [Overseerr Media Library Request Management](https://github.com/sct/overseerr)
 * [Plex media server](https://www.plex.tv/)
-* [Portainer Docker Container manager](https://portainer.io/)
 * [Prowlarr indexer manager/proxy](https://github.com/Prowlarr/Prowlarr)
 * [Radarr movie library manager](https://radarr.video/)
 * [Requestrr Chatbot for Sonarr/Radarr/Ombi](https://github.com/darkalfx/requestrr)
-* [SABnzbd Usenet download tool](https://github.com/sabnzbd/sabnzbd)
-* [SickChill TV library manager](https://github.com/SickChill/SickChill)
 * [Sonarr TV library manager](https://sonarr.tv/)
 * [Speedtest - Tracker](https://github.com/henrywhitaker3/Speedtest-Tracker)
-* [SQLitebrowser DB browser for SQLite](https://sqlitebrowser.org/)
 * [Tautulli Plex Media Server monitor](https://github.com/tautulli/tautulli)
 * [Tdarr Distributed Transcoding System](https://tdarr.io)
-* [TubeSync - YouTube PVR](https://github.com/meeb/tubesync)
 * [Watchtower Automatic container updater](https://github.com/containrrr/watchtower)
 
 ## Prerequisites
@@ -140,6 +122,8 @@ Portainer has been switched to the **CE** branch
 
 **Thanks go out to:**
 
+[@tom472](https://github.com/tom472) for the initial creation of this project
+
 [@kspillane](https://github.com/kspillane)
 
 [@mnkhouri](https://github.com/mnkhouri)
@@ -152,15 +136,6 @@ Portainer has been switched to the **CE** branch
 
 [Docker](https://github.com/docker)
 
-[Portainer.io](https://github.com/portainer)
-
----
-
-If you enjoy the project -- Fuel it with some caffeine :)
-
-[![Donate](https://img.shields.io/badge/Donate-SquareCash-brightgreen.svg)](https://cash.me/$TomMorgan)
-
----
 
 ## Disclaimer
 
@@ -171,7 +146,7 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABI
 
 MIT License
 
-Copyright (c) 2017 Tom Morgan
+Copyright (c) 2025 Joseph Brooksbank
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

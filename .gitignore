@@ -1,5 +1,6 @@
 README.md
 content
+.env
 
 ### Windows ###
 # Windows thumbnail cache files
@@ -21,3 +22,24 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# backup env files
+historical/*
+
+# container config folders
+bazarr/*
+delugevpn/*
+dozzle/*
+filebrowser/*
+flaresolverr/*
+glances/*
+homer/*
+overseerr/*
+plex/*
+prowlarr/*
+radarr/*
+requestrr/*
+sonarr/*
+speedtest/*
+tautulli/*
+tdarr/*
