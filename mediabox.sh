@@ -15,26 +15,63 @@ if [ -e .env ]; then
     localver=$(docker-compose -v | cut -d " " -f4 | sed 's/,//g')
     printf "Current local version is: %s \\n" "$localver"
     if [ "$localver" != "$onlinever" ]; then
-        sudo curl -s https://api.github.com/repos/docker/compose/releases/latest | grep "browser_download_url" | grep -i -m1 "$(uname -s)"-"$(uname -m)" | cut -d '"' -f4 | xargs sudo curl -L -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-        printf "\\n\\n"
+        read "Update to Docker-Compose is available. Do you want to update now? (y/n): " dcanswer
+        printf "\\n"
+        if [ "$dcanswer" != "y" ] && [ "$dcanswer" != "Y" ]; then
+            printf "Skipping Docker-Compose update as requested.\\n\\n"
+
+        else
+            sudo curl -s https://api.github.com/repos/docker/compose/releases/latest | grep "browser_download_url" | grep -i -m1 "$(uname -s)"-"$(uname -m)" | cut -d '"' -f4 | xargs sudo curl -L -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            printf "\\n\\n"
+        fi
     else
         printf "No Docker-Compose Update needed.\\n\\n"
     fi
     # Check for updates to the Mediabox repo
-    printf "Updating your local copy of Mediabox.\\n\\n"
-    printf "If this file 'mediabox.sh' is updated it will be re-run automatically.\\n\\n"
-    git stash > /dev/null 2>&1
-    git pull
-    if git diff-tree --no-commit-id --name-only -r HEAD | grep -q "mediabox.sh"; then
-        mv .env 1.env
-        printf "Restarting mediabox.sh"
-        ./mediabox.sh
-    fi
-    if [ -z "$(git diff-tree --no-commit-id --name-only -r HEAD)" ]; then
+    printf "Checking for updates to Mediabox\\n"
+    git fetch > /dev/null 2>&1
+
+    # Check if remote is ahead of local (updates available)
+    LOCAL=$(git rev-parse HEAD)
+    REMOTE=$(git rev-parse @{u} 2>/dev/null || git rev-parse origin/main 2>/dev/null || git rev-parse origin/master 2>/dev/null)
+    BASE=$(git merge-base HEAD "$REMOTE" 2>/dev/null)
+    
+    if [ "$LOCAL" != "$REMOTE" ] && [ "$LOCAL" = "$BASE" ]; then
+        printf "Updates are available for Mediabox.\\n"
+        printf "\\n"
+        read -r -p "Do you want to update your local copy of Mediabox? (y/n): " update_answer
+        printf "\\n"
+        
+        if [ "$update_answer" == "y" ] || [ "$update_answer" == "Y" ]; then
+            printf "Updating your local copy of Mediabox.\\n\\n"
+            printf "If this file 'mediabox.sh' is updated it will be re-run automatically.\\n\\n"
+            
+            # Check if there are local changes that need to be stashed
+            if ! git diff-index --quiet HEAD --; then
+                printf "Local changes detected. Stashing them before update.\\n"
+                git stash > /dev/null 2>&1
+            fi
+            
+            git pull
+            if git diff-tree --no-commit-id --name-only -r HEAD | grep -q "mediabox.sh"; then
+                mv .env 1.env
+                printf "Restarting mediabox.sh\\n"
+                ./mediabox.sh
+            fi
+            mv .env 1.env
+        else
+            printf "Skipping update. Continuing with current version.\\n\\n"
+        fi
+    else
         printf "Your Mediabox is current - No Update needed.\\n\\n"
-        mv .env 1.env
     fi
+fi
+
+read -r -p "Continue? (y/n)" continue_answer
+if [ "$continue_answer" != "y" ] && [ "$continue_answer" != "Y" ]; then
+    printf "Exiting script as requested.\\n"
+    exit 0
 fi
 
 # After update collect some current known variables
