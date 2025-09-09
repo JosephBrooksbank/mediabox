@@ -83,6 +83,7 @@ services:
         - '${PWD}:/data/mediabox'
         - '${C1}:/data/contentA'
         - '${C2}:/data/contentB'
+        - '/mnt/content/content:/data/content'
         - '${DLDIR}:/data/downloads'
         - '${MISCDIR}:/media/misc'
         - '${MOVIEDIR}:/media/movies'
