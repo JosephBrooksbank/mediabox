@@ -45,9 +45,7 @@ services:
         - PUID=${PUID}
         - PGID=${PGID}
     volumes:
-        - '${DLDIR}:/data'
-        - '${C1}:/data/contentA'
-        - '${C2}:/data/contentB'
+        - '${M}:/data/merged'
         - './delugevpn/config:/config'
         - '/etc/localtime:/etc/localtime:ro'
 
@@ -81,14 +79,7 @@ services:
     volumes:
         - './filebrowser:/config'
         - '${PWD}:/data/mediabox'
-        - '${C1}:/data/contentA'
-        - '${C2}:/data/contentB'
-        - '/mnt/content/content:/data/content'
-        - '${DLDIR}:/data/downloads'
-        - '${MISCDIR}:/media/misc'
-        - '${MOVIEDIR}:/media/movies'
-        - '${MUSICDIR}:/media/music'
-        - '${TVDIR}:/media/tv'
+        - '${M}:/data/merged'
 
   # ----------------------------------------
   # FLARESOLVERR
@@ -109,25 +100,42 @@ services:
         - ./flaresolverr:/storage
 
   # ----------------------------------------
-  # GLANCES
+  # BESZEL
   # ----------------------------------------
-  glances:
-    image: nicolargo/glances:latest-alpine
-    container_name: glances
+  beszel:
+    image: henrygd/beszel
+    container_name: beszel
     restart: unless-stopped
     network_mode: "bridge"
     pid: host
     ports:
-        - '${IP_ADDRESS}:61208:61208'
+        - '${IP_ADDRESS}:8090:8090'
     environment:
-        - PUID=${PUID}
-        - PGID=${PGID}
-        - TZ=${TZ}
-        - GLANCES_OPT=-w
+        PORT: 61208
+        PUID: ${PUID}
+        PGID: ${PGID}
+        TZ: ${TZ}
+        APP_URL: http://192.168.0.90:8090
     volumes:
-        - './glances:/config'
-        - '/var/run/docker.sock:/var/run/docker.sock:ro'
-
+        # - './glances:/config'
+        - ./beszel:/beszel_data    
+        - ./beszel_socket:/beszel_socket
+        # - '/var/run/docker.sock:/var/run/docker.sock:ro'
+  beszel-agent:
+    image: henrygd/beszel-agent
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./beszel_agent_data:/var/lib/beszel-agent
+      # monitor other disks / partitions by mounting a folder in /extra-filesystems
+      # - /mnt/disk/.beszel:/extra-filesystems/sda1:ro
+    environment:
+      LISTEN: 45876
+      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAykuwW75H74PKymORk8VWDN5d/4lvW6X9xHZCm32jez'
+      TOKEN: 1c20-595b7ffe96-14dc-43b5ec1778
+      HUB_URL: http://192.168.0.90:8090
 
   # ----------------------------------------
   # HOMER
@@ -192,12 +200,7 @@ services:
     volumes:
         - './plex:/config'
         - './plex/transcode:/transcode'
-        - '${MISCDIR}:/data/misc'
-        - '${MOVIEDIR}:/data/movies'
-        - '${MUSICDIR}:/data/music'
-        - '${TVDIR}:/data/tvshows'
-        - '${C1}:/data/contentA'
-        - '${C2}:/data/contentB'
+        - '${M}:/data/merged'
         - '/etc/localtime:/etc/localtime:ro'
 
   # ----------------------------------------
@@ -233,10 +236,7 @@ services:
         - PGID=${PGID}
     volumes:
         - './radarr:/config'
-        - '${DLDIR}/completed:/data/completed'
-        - '${MOVIEDIR}:/movies'
-        - '${C1}:/data/contentA'
-        - '${C2}:/data/contentB'
+        - '${M}:/data/merged'
         - '/etc/localtime:/etc/localtime:ro'
 
   # ----------------------------------------
@@ -272,10 +272,7 @@ services:
         - TZ=${TZ}
     volumes:
         - './sonarr:/config'
-        - '${DLDIR}/completed:/data/completed'
-        - '${TVDIR}:/tv'
-        - '${C1}:/data/contentA'
-        - '${C2}:/data/contentB'
+        - '${M}:/data/merged'
         - '/etc/localtime:/etc/localtime:ro'
 
   bazarr:
@@ -287,11 +284,7 @@ services:
       - TZ=Etc/UTC
     volumes:
         - './bazarr/:/config'
-        - '${DLDIR}/completed:/data/completed'
-        - '${TVDIR}:/tv'
-        - '${C1}:/data/contentA'
-        - '${C2}:/data/contentB'
-        - '${MOVIEDIR}:/movies'
+        - '${M}:/data/merged'
         - '/etc/localtime:/etc/localtime:ro'
     ports:
       - 6767:6767
@@ -340,12 +333,7 @@ services:
         - './tdarr/configs:/app/configs'
         - './tdarr/logs:/app/logs'
         - './tdarr/transcode_cache:/temp'
-        - '${MISCDIR}:/data/misc'
-        - '${MOVIEDIR}:/data/movies'
-        - '${MUSICDIR}:/data/music'
-        - '${TVDIR}:/data/tvshows'
-        - '${C1}:/data/contentA'
-        - '${C2}:/data/contentB'
+        - '${M}:/data/merged'
         - '/etc/localtime:/etc/localtime:ro'
 
   # ----------------------------------------
@@ -370,12 +358,7 @@ services:
         - './tdarr/configs:/app/configs'
         - './tdarr/logs:/app/logs'
         - './tdarr/transcode_cache:/temp'
-        - '${MISCDIR}:/data/misc'
-        - '${MOVIEDIR}:/data/movies'
-        - '${MUSICDIR}:/data/music'
-        - '${TVDIR}:/data/tvshows'
-        - '${C1}:/data/contentA'
-        - '${C2}:/data/contentB'
+        - '${M}:/data/merged'
         - '/etc/localtime:/etc/localtime:ro'
 
   # ----------------------------------------
@@ -434,10 +417,7 @@ services:
       - ./fileflow:/app/Data
       - ./temp:/temp
       - ./dockermods:/app/common
-      - '${TVDIR}:/tv'
-      - '${C1}:/data/contentA'
-      - '${C2}:/data/contentB'
-      - '${MOVIEDIR}:/movies'
+      - '${M}:/data/merged'
 
   profilarr:
     image: santiagosayshey/profilarr:latest
@@ -452,3 +432,22 @@ services:
       - UMASK=022 
       - TZ=${TZ}
     restart: unless-stopped
+# ----------------------------------------
+# LIDARR
+# ----------------------------------------
+  # lidarr:
+  #   image: lscr.io/linuxserver/lidarr
+  #   container_name: lidarr
+  #   restart: unless-stopped
+  #   network_mode: "bridge"
+  #   ports:
+  #       - '${IP_ADDRESS}:8686:8686'
+  #   environment:
+  #       - PUID=${PUID}
+  #       - PGID=${PGID}
+  #   volumes:
+  #       - './lidarr:/config'
+  #       - '${DLDIR}/completed:/data/completed'
+  #       - '${M}:/data/merged'
+  #       - '${MUSICDIR}:/music'
+  #       - '/etc/localtime:/etc/localtime:ro'

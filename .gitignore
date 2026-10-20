@@ -48,3 +48,5 @@ fileflow/*
 dockermods/*
 temp/*
 profilarr/*
+beszel/*
+beszel_agent_data/*
