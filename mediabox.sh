@@ -6,6 +6,43 @@ if [ "$EUID" -eq 0 ]
   exit
 fi
 
+# Copy the Homer dashboard files from prep/ into homer/ and fill in local values
+# Requires: locip, thishost, daemonun, daemonpass and an existing .env
+update_homer() {
+    printf "Updating Homer dashboard files.\\n"
+    while [ ! -f homer/config.yml ]; do sleep 1; done
+    docker stop homer > /dev/null 2>&1
+    mkdir -p homer/icons
+    cp prep/config.yml homer/config.yml
+    cp prep/mediaboxconfig.html homer/mediaboxconfig.html
+    cp prep/portmap.html homer/portmap.html
+    cp prep/icons/* homer/icons/
+    sed '/^PIA/d' < .env > homer/env.txt # Pull PIA creds from the displayed .env file
+    perl -i -pe "s/thishost/$thishost/g" homer/config.yml
+    perl -i -pe "s/locip/$locip/g" homer/config.yml
+    perl -i -pe "s/locip/$locip/g" homer/mediaboxconfig.html
+    perl -i -pe "s/daemonun/$daemonun/g" homer/mediaboxconfig.html
+    perl -i -pe "s/daemonpass/$daemonpass/g" homer/mediaboxconfig.html
+    docker start homer > /dev/null 2>&1
+    # Create Port Mapping file
+    for i in $(docker ps --format '{{.Names}}' | sort); do printf "\n === $i Ports ===\n" && docker port "$i"; done > homer/ports.txt
+}
+
+# Only refresh the Homer dashboard: ./mediabox.sh --homer
+if [ "$1" == "--homer" ]; then
+    if [ ! -e .env ]; then
+        printf "No .env file found - run ./mediabox.sh without --homer first.\\n"
+        exit 1
+    fi
+    thishost=$(hostname)
+    locip=$(hostname -I | awk '{print $1}')
+    daemonun=$(grep CPDAEMONUN .env | cut -d = -f2)
+    daemonpass=$(grep CPDAEMONPASS .env | cut -d = -f2)
+    update_homer
+    printf "Homer update complete.\\n"
+    exit 0
+fi
+
 # See if we need to check GIT for updates
 if [ -e .env ]; then
     # Check for Updated Docker-Compose
@@ -15,7 +52,7 @@ if [ -e .env ]; then
     localver=$(docker-compose -v | cut -d " " -f4 | sed 's/,//g')
     printf "Current local version is: %s \\n" "$localver"
     if [ "$localver" != "$onlinever" ]; then
-        read "Update to Docker-Compose is available. Do you want to update now? (y/n): " dcanswer
+        read -r -p "Update to Docker-Compose is available. Do you want to update now? (y/n): " dcanswer
         printf "\\n"
         if [ "$dcanswer" != "y" ] && [ "$dcanswer" != "Y" ]; then
             printf "Skipping Docker-Compose update as requested.\\n\\n"
@@ -78,7 +115,7 @@ fi
 if [ -e 1.env ]; then
     # Give updated Message
     printf "Docker Compose and Mediabox have been updated.\\n\\n"
-    # Grab the CouchPotato, NBZGet, & PIA usernames & passwords to reuse
+    # Grab the Deluge daemon & PIA usernames & passwords to reuse
     daemonun=$(grep CPDAEMONUN 1.env | cut -d = -f2)
     daemonpass=$(grep CPDAEMONPASS 1.env | cut -d = -f2)
     piauname=$(grep PIAUNAME 1.env | cut -d = -f2)
@@ -194,42 +231,29 @@ if [ -z "$musicdirectory" ]; then
     musicdirectory="$PWD/content/music"
 fi
 
-# Adjust for Container name changes
-[ -d "sickrage/" ] && mv sickrage/ sickchill  # Switch from Sickrage to SickChill
-
-mkdir -p couchpotato
+mkdir -p bazarr
+mkdir -p beszel
+mkdir -p beszel_agent_data
+mkdir -p beszel_socket
 mkdir -p delugevpn
 mkdir -p delugevpn/config/openvpn
-mkdir -p duplicati
-mkdir -p duplicati/backups
-mkdir -p emby
+mkdir -p dockermods
 mkdir -p filebrowser
+mkdir -p fileflow
 mkdir -p flaresolverr
-mkdir -p glances
-mkdir -p headphones
 mkdir -p historical/env_files
 mkdir -p homer
-mkdir -p jackett
-mkdir -p jellyfin
-mkdir -p lidarr
-mkdir -p metube
-mkdir -p minio
-mkdir -p nzbget
-mkdir -p nzbhydra2
-mkdir -p ombi
-mkdir -p overseerr
 mkdir -p "plex/Library/Application Support/Plex Media Server/Logs"
-mkdir -p portainer
+mkdir -p profilarr
 mkdir -p prowlarr
 mkdir -p radarr
 mkdir -p requestrr
-mkdir -p sickchill
+mkdir -p seerr
 mkdir -p sonarr
 mkdir -p speedtest
-mkdir -p sqlitebrowser
 mkdir -p tautulli
 mkdir -p tdarr
-mkdir -p tubesync
+mkdir -p temp
 
 # Create menu - Select and Move the PIA VPN files
 echo "The following PIA Servers are avialable that support port-forwarding (for DelugeVPN); Please select one:"
@@ -301,26 +325,9 @@ echo "VPN_REMOTE=$vpnremote"
 echo ".env file creation complete"
 printf "\\n\\n"
 
-# Adjust for the Tautulli replacement of PlexPy
-docker rm -f plexpy > /dev/null 2>&1
-# Adjust for the Watchtower replacement of Ouroboros
-docker rm -f ouroboros > /dev/null 2>&1
-# Adjust for old uhttpd web container - Noted in issue #47
-docker rm -f uhttpd > /dev/null 2>&1
-[ -d "www/" ] && mv www/ historical/www/
-# Adjust for removal of Muximux
-docker rm -f muximux > /dev/null 2>&1
-[ -d "muximux/" ] && mv muximux/ historical/muximux/
 # Move back-up .env files
 mv 20*.env historical/env_files/ > /dev/null 2>&1
 mv historical/20*.env historical/env_files/ > /dev/null 2>&1
-# Remove files after switch to using Prep folder
-rm -f mediaboxconfig.php > /dev/null 2>&1
-rm -f settings.ini.php > /dev/null 2>&1
-rm -f prep/mediaboxconfig.php > /dev/null 2>&1
-rm -f prep/settings.ini.php > /dev/null 2>&1
-rm -f muximux/www/muximux/mediaboxconfig.php > /dev/null 2>&1
-rm -f muximux/www/muximux/env.txt > /dev/null 2>&1
 
 # Download & Launch the containers
 echo "The containers will now be pulled and launched"
@@ -331,10 +338,8 @@ docker-compose up -d --remove-orphans
 printf "\\n\\n"
 
 # Configure the access to the Deluge Daemon
-# The same credentials can be used for NZBGet's webui
 if [ -z "$daemonun" ]; then
-echo "You need to set a username and password for some of the programs - including."
-echo "The Deluge daemon, NZBGet's API & web interface."
+echo "You need to set a username and password for the Deluge daemon."
 read -r -p "What would you like to use as the access username?: " daemonun
 read -r -p "What would you like to use as the access password?: " daemonpass
 printf "\\n\\n"
@@ -352,60 +357,15 @@ perl -i -pe 's/"allow_remote": false,/"allow_remote": true,/g'  delugevpn/config
 perl -i -pe 's/"move_completed": false,/"move_completed": true,/g'  delugevpn/config/core.conf
 docker start delugevpn > /dev/null 2>&1
 
-# Configure FlareSolverr URL for Jackett
-while [ ! -f jackett/Jackett/ServerConfig.json ]; do sleep 1; done
-docker stop jackett > /dev/null 2>&1
-perl -i -pe 's/"FlareSolverrUrl": ".*",/"FlareSolverrUrl": "http:\/\/'"$locip"':8191",/g' jackett/Jackett/ServerConfig.json
-docker start jackett > /dev/null 2>&1
-
-# Configure NZBGet
-[ -d "content/nbzget" ] && mv content/nbzget/* content/ && rmdir content/nbzget
-while [ ! -f nzbget/nzbget.conf ]; do sleep 1; done
-docker stop nzbget > /dev/null 2>&1
-perl -i -pe "s/ControlUsername=nzbget/ControlUsername=$daemonun/g"  nzbget/nzbget.conf
-perl -i -pe "s/ControlPassword=tegbzn6789/ControlPassword=$daemonpass/g"  nzbget/nzbget.conf
-perl -i -pe "s/{MainDir}\/intermediate/{MainDir}\/incomplete/g" nzbget/nzbget.conf
-docker start nzbget > /dev/null 2>&1
-
-# Push the Deluge Daemon and NZBGet Access info the to Auth file and the .env file
+# Push the Deluge Daemon access info to the Auth file and the .env file
 echo "$daemonun":"$daemonpass":10 >> ./delugevpn/config/auth
 {
 echo "CPDAEMONUN=$daemonun"
 echo "CPDAEMONPASS=$daemonpass"
-echo "NZBGETUN=$daemonun"
-echo "NZBGETPASS=$daemonpass"
 } >> .env
 
 # Configure Homer settings and files
-while [ ! -f homer/config.yml ]; do sleep 1; done
-docker stop homer > /dev/null 2>&1
-cp prep/config.yml homer/config.yml
-cp prep/mediaboxconfig.html homer/mediaboxconfig.html
-cp prep/portmap.html homer/portmap.html
-cp prep/icons/* homer/icons/
-sed '/^PIA/d' < .env > homer/env.txt # Pull PIA creds from the displayed .env file
-perl -i -pe "s/thishost/$thishost/g" homer/config.yml
-perl -i -pe "s/locip/$locip/g" homer/config.yml
-perl -i -pe "s/locip/$locip/g" homer/mediaboxconfig.html
-perl -i -pe "s/daemonun/$daemonun/g" homer/mediaboxconfig.html
-perl -i -pe "s/daemonpass/$daemonpass/g" homer/mediaboxconfig.html
-docker start homer > /dev/null 2>&1
-
-# If PlexPy existed - copy plexpy.db to Tautulli
-if [ -e plexpy/plexpy.db ]; then
-    docker stop tautulli > /dev/null 2>&1
-    mv tautulli/tautulli.db tautulli/tautulli.db.orig
-    cp plexpy/plexpy.db tautulli/tautulli.db
-    mv plexpy/plexpy.db plexpy/plexpy.db.moved
-    docker start tautulli > /dev/null 2>&1
-    mv plexpy/ historical/plexpy/
-fi
-if [ -e plexpy/plexpy.db.moved ]; then # Adjust for missed moves
-    mv plexpy/ historical/plexpy/
-fi
-
-# Create Port Mapping file
-for i in $(docker ps --format {{.Names}} | sort); do printf "\n === $i Ports ===\n" && docker port "$i"; done > homer/ports.txt
+update_homer
 
 # Completion Message
 printf "Setup Complete - Open a browser and go to: \\n\\n"

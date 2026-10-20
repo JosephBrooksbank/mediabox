@@ -106,6 +106,8 @@ Once the prerequisites are all taken care of you can move forward with using med
 
 4. To upgrade Mediabox at anytime, re-run the mediabox script: `$ ./mediabox.sh`
 
+5. To only refresh the Homer dashboard from the `prep` folder (no other setup steps): `$ ./mediabox.sh --homer`
+
 ### Please be prepared to supply the following details after you run Step 3 above
 
 As the script runs you will be prompted for:
